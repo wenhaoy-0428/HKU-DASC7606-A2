@@ -126,9 +126,10 @@ def example_formating(question, answer=None, candidate_answers=None, prompt_type
             prompt = f"Question: {question}\nCandidate answers: {candidate_answers}\nGold answer:"
     elif prompt_type == "v2.0":
         if answer is not None:
-            prompt = "Write Your Code Here"
+            # YWH
+            prompt = f"Question: {question}\nGold answer: {answer}"
         else:
-            prompt = "Write Your Code Here"
+            prompt = f"Question: {question}\nGold answer:"
     else:
         raise NotImplementedError
     return prompt
@@ -139,7 +140,8 @@ def generate_prompt(question, candidate_answers, prompt_type, N,
     indices = list(range(len(demonstrations)))
     if top_k: # task 5
         question_embeddings = llm_embedder(embedder, [question], True) # [1, n_dim]
-        similarity = "Write Your Code Here" @ "Write Your Code Here" # [1, n_demo]
+        # YWH
+        similarity = question_embeddings @ demonstration_embeddings.T # [1, n_demo]
         indices_sorted = sorted(list(range(len(demonstrations))), key=lambda x: similarity[0][x], reverse=True)
         if top_k_reverse:
             indices = indices_sorted[:N][::-1] + indices_sorted[N:]
@@ -266,8 +268,9 @@ def main():
 
         with torch.no_grad():
             # task 6
-            outputs = model("Write Your Code Here")
-            log_likelihood = "Write Your Code Here"
+            # YWH
+            outputs = model(**encoding)
+            log_likelihood = -outputs.loss
 
 
         print("Saving results to {}".format(output_file))
