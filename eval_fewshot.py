@@ -1,3 +1,9 @@
+from tokenization_codegen import CodeGenTokenizer
+from modeling_phi import PhiForCausalLM
+import transformers
+import json
+import torch
+from tqdm import tqdm
 import argparse
 import pprint
 import os
@@ -10,7 +16,7 @@ IGNORE_INDEX = -100
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--data_path', type=str, default="")
+parser.add_argument('--data_path', type=str, default="data/ARC-Easy-test.jsonl")
 parser.add_argument('--device_id', type=str, default="")
 parser.add_argument('--model', type=str, default='', help="")
 parser.add_argument('--embedder', type=str, default="")
@@ -29,27 +35,19 @@ args = parser.parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = str(args.device_id)
 
 
-from tqdm import tqdm
-import torch
-import json
-
-import transformers
-from modeling_phi import PhiForCausalLM
-from tokenization_codegen import CodeGenTokenizer
-
-
 if torch.cuda.is_available():
     device = "cuda"
 else:
     device = "cpu"
 
 
-def get_arc_problems(data_path="data/ARC-Easy-test.jsonl"):
+def get_arc_problems(data_path):
     dataset = []
     with open(data_path, encoding="utf-8") as f:
         for line in f.readlines():
             json_obj = json.loads(line)
-            candidate_answers = " ".join([f"({label}) {text}" for text, label in zip(json_obj["choices"]["text"], json_obj["choices"]["label"])]).strip()
+            candidate_answers = " ".join([f"({label}) {text}" for text, label in zip(
+                json_obj["choices"]["text"], json_obj["choices"]["label"])]).strip()
             for text, label in zip(json_obj["choices"]["text"], json_obj["choices"]["label"]):
                 dataset.append({
                     "id": json_obj["id"],
@@ -67,7 +65,8 @@ def load_all_demonstrations(train_path="data/ARC-Challenge-train.jsonl"):
     with open(train_path, encoding="utf-8") as f:
         for line in f.readlines():
             json_obj = json.loads(line)
-            demonstrations.append((json_obj["question"], json_obj["choices"]["text"], json_obj["choices"]["label"], json_obj["answerKey"]))
+            demonstrations.append((json_obj["question"], json_obj["choices"]["text"],
+                                  json_obj["choices"]["label"], json_obj["answerKey"]))
     print(f"load {len(demonstrations)} demonstrations from {train_path}")
     return demonstrations
 
@@ -110,11 +109,14 @@ def llm_embedder(llm, sentences, is_query=True):
     sentence_embeddings = llm.encode(sentences)
     return sentence_embeddings
 
+
 def candidate_answers_formating(texts, labels):
     candidate_answers = " ".join([f"({label}) {text}" for text, label in zip(texts, labels)]).strip()
     return candidate_answers
 
 # task 4
+
+
 def example_formating(question, answer=None, candidate_answers=None, prompt_type="v2.0"):
     if prompt_type == "v1.0":
         if answer is not None:
@@ -130,14 +132,15 @@ def example_formating(question, answer=None, candidate_answers=None, prompt_type
         raise NotImplementedError
     return prompt
 
+
 def generate_prompt(question, candidate_answers, prompt_type, N,
                     demonstrations, demonstration_embeddings, embedder,
                     top_k=False, top_k_reverse=False):
 
     indices = list(range(len(demonstrations)))
-    if top_k: # task 5
-        question_embeddings = llm_embedder(embedder, [question], True) # [1, n_dim]
-        similarity = "Write Your Code Here" @ "Write Your Code Here" # [1, n_demo]
+    if top_k:  # task 5
+        question_embeddings = llm_embedder(embedder, [question], True)  # [1, n_dim]
+        similarity = "Write Your Code Here" @ "Write Your Code Here"  # [1, n_demo]
         indices_sorted = sorted(list(range(len(demonstrations))), key=lambda x: similarity[0][x], reverse=True)
         if top_k_reverse:
             indices = indices_sorted[:N][::-1] + indices_sorted[N:]
@@ -159,6 +162,14 @@ def generate_prompt(question, candidate_answers, prompt_type, N,
 def get_model(
     base_model: str = "bigcode/starcoder",
 ):
+    """Create a tokenizer and PhiForCausal model.
+
+    Args:
+        base_model (str, optional): _description_. Defaults to "bigcode/starcoder".
+
+    Returns:
+        _type_: _description_
+    """
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='bigcode/starcoder'"
     )
@@ -170,12 +181,15 @@ def get_model(
     model = PhiForCausalLM.from_pretrained(
         base_model,
         device_map="auto",
+        # YWH
+        offload_folder="offload"
     )
     model.config.pad_token_id = tokenizer.pad_token_id
 
     model.eval()
 
     return tokenizer, model
+
 
 def _tokenize_fn(strings: Sequence[str], tokenizer: transformers.PreTrainedTokenizer) -> Dict:
     """Tokenize a list of strings."""
@@ -216,12 +230,12 @@ def preprocess(
     return dict(input_ids=torch.stack(input_ids).to(device), labels=torch.stack(labels).to(device))
 
 
-
 def main():
 
     argsdict = vars(args)
     print(pprint.pformat(argsdict))
 
+    # variable problems is the dataset, expanded where each choice of a question becomes an entry
     problems = get_arc_problems(args.data_path)[args.start_index: args.end_index]
 
     num_samples = len(problems)
@@ -232,8 +246,10 @@ def main():
     print(f"loaded {args.embedder}.")
 
     demonstrations = load_all_demonstrations(args.data_path.replace("test", "train").replace("validation", "train"))
-    demonstration_embeddings = llm_embedder(embedder, [d[0] for d in demonstrations], False) # ndarray: [n_demons, n_dim]
-
+    input(demonstrations[:10])
+    demonstration_embeddings = llm_embedder(embedder, [d[0]
+                                            for d in demonstrations], False)  # ndarray: [n_demons, n_dim]
+    input(demonstration_embeddings)
     for i in tqdm(range(num_samples), ncols=0, total=num_samples):
         output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
@@ -270,8 +286,6 @@ def main():
                 "label": problems[i]["label"],
                 "answerKey": problems[i]["answerKey"],
             }) + "\n")
-
-
 
 
 if __name__ == '__main__':
