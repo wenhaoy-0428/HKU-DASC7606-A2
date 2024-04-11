@@ -17,11 +17,11 @@ if __name__ == "__main__":
     # replace "xxx" with your access token (see https://huggingface.co/docs/hub/security-tokens and https://huggingface.co/settings/tokens)
     use_auth_token = "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"
 
-    repo_id = "microsoft/phi-1_5"
-    local_dir = "models/phi-1_5"  # replace "xxx" with a real path and make sure that it has at least 3G of space
+    repo_id = "microsoft/phi-2"
+    local_dir = "models/phi-2"  # replace "xxx" with a real path and make sure that it has at least 3G of space
 
     download_from_hf_hub(repo_id=repo_id, use_auth_token=use_auth_token, local_dir=local_dir)
 
-    repo_id = "BAAI/bge-small-en-v1.5"
-    local_dir = "models/bge-small-en-v1.5"
+    repo_id = "BAAI/bge-large-en-v1.5"
+    local_dir = "models/bge-large-en-v1.5"
     download_from_hf_hub(repo_id=repo_id, use_auth_token=use_auth_token, local_dir=local_dir)

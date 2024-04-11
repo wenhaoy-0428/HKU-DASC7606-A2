@@ -1,0 +1,1 @@
+{"id": "Mercury_400885", "log_likelihood": -0.8554372787475586, "question": "Which equation is a balanced chemical equation?", "candidate_answers": "(A) 2NaOH + CaBr_{2} -> Ca(OH)_{2} + NaBr (B) NO + Cl_{2} -> NOCl (C) CaCO_{3} -> CaO + 2CO_{2} (D) 2AlCl_{3} + 3Mg -> 3MgCl_{2} + 2Al", "answer": "NO + Cl_{2} -> NOCl", "label": "B", "answerKey": "D"}

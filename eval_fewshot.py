@@ -1,5 +1,6 @@
 from tokenization_codegen import CodeGenTokenizer
 from modeling_phi import PhiForCausalLM
+# from transformers import AutoModelForCausalLM, AutoTokenizer
 import transformers
 import json
 import torch
@@ -177,6 +178,8 @@ def get_model(
     )
 
     tokenizer = CodeGenTokenizer.from_pretrained(base_model)
+
+    # tokenizer = AutoTokenizer.from_pretrained(base_model,trust_remote_code=True)
     tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -186,6 +189,7 @@ def get_model(
         # YWH
         offload_folder="offload"
     )
+    # model = AutoModelForCausalLM.from_pretrained(base_model)
     model.config.pad_token_id = tokenizer.pad_token_id
 
     model.eval()
