@@ -114,14 +114,36 @@ data="data/ARC-Challenge-validation.jsonl"
 # save_path="./output_11_e"
 
 #12
+# model="./models/phi-2/"
+# embedder="./models/bge-large-en-v1.5/"
+# prompt="v1.0"
+# N=12
+# top_k=True
+# reverse=False
+# save_path="./output_12_c"
+
+#13
+
+# data="data/ARC-Challenge-test.jsonl"
+# # data="data/ARC-Easy-test.jsonl"
+# model="./models/phi-2/"
+# embedder="./models/bge-large-en-v1.5/"
+# prompt="v1.0"
+# N=12
+# top_k=True
+# reverse=False
+# save_path="./output_13_c"
+
+#14
+# data="data/ARC-Challenge-test.jsonl"
+data="data/ARC-Easy-test.jsonl"
 model="./models/phi-2/"
 embedder="./models/bge-large-en-v1.5/"
 prompt="v1.0"
-N=12
+N=4
 top_k=True
 reverse=False
-save_path="./output_12_c"
-
+save_path="./output_14_e"
 
 mkdir $save_path
 echo python eval_fewshot.py --data_path $data --device_id "0,1" --model $model --embedder $embedder  --start_index 0 --end_index 9999 --max_len 1024 --output_path $save_path --overwrite False --prompt_type $prompt --N $N --top_k $top_k --top_k_reverse $reverse
